@@ -11,8 +11,8 @@ from PyPDF2 import PdfFileReader
 
 
 signaturePatterns = [
-    r"([V]5 *[0-9]{3}(?:[a-g](?:.{0,5}[a-g])?)?)",
-    r"([VY] {0,4}5 *[0-9]{3}(?:[a-g].{0,5}[a-g]?)?)",
+    r"([V]5 *[0-9]{3}(?:[a-g](?:.{0,1}[a-g])?)?)",
+    r"([VY] {0,4}5 *[0-9]{3}(?:[a-g].{0,3}[a-g]?)?)",
     ]
 
 autorPatterns = [
@@ -29,8 +29,6 @@ crapPattern = r"([a-d]=[\d]{2}/.{1,4})"
 def getDataOnline(autor,title):
     s=requests.session()
     
-    print(autor)
-    print(title)
     page = s.get('http://katalogix.uni-muenster.de/Katalog/start.do')
     tree = html.fromstring(page.text)
     CSId = tree.xpath('//input[@name="CSId"]/@value')
@@ -95,109 +93,114 @@ if __name__ == '__main__':
             pdfFiles.append(file) 
 
     pdfCount = len(pdfFiles)
+    print("{0} PDf Datei(en) gefunden:".format(pdfCount))
+    for pdfFile in pdfFiles:
+        print(pdfFile)
     
 
     csvFile = codecs.open("results.csv","w+",encoding='utf-8')
 
- 
-    #cardFileText = sys.stdin.read().replace(";","").split("\n\n\n")
-    cardFileText = []
-    pdfInput = PdfFileReader(pdfFiles[0],"rb")
-    
-    numPages = pdfInput.getNumPages()
-    #pdf seiten in text umwandlen
-    for pageNum in range(0,numPages):
-        #semikolons entfernen - wegen csv
-        pageText = pdfInput.getPage(pageNum).extractText().replace(";","")
-        cardFileText.append(pageText)
-    
-    
-    #cardFileText = [card for card in cardFileText if len(card) > 0]
+    pdfFileNum = 1
+    for pdfFile in pdfFiles:
+        
+        cardFileText = []
+        pdfInput = PdfFileReader(pdfFiles[0],"rb")
+        
+        numPages = pdfInput.getNumPages()
+        #pdf seiten in text umwandlen
+        for pageNum in range(0,numPages):
+            #semikolons entfernen - wegen csv
+            pageText = pdfInput.getPage(pageNum).extractText().replace(";","")
+            cardFileText.append(pageText)
+        
+        
+        #cardFileText = [card for card in cardFileText if len(card) > 0]
 
 
-    
-    pageNum = 1
-
-    signature = ''
-    dateLine = ''
-    autors = []
-    for card in cardFileText:
+        
+        pageNum = 1
 
 
-        crapData = re.findall(crapPattern,card)
-        for crap in crapData:
-            
-            card = card.replace(crap,"")
+        for card in cardFileText:
+            signature = ''
+            dateLine = ''
+            autors = []
+            print(pdfFile +"({0}/{1})".format(pdfFileNum,pdfCount) + " - Seite {0}/{1}".format(pageNum,numPages))
 
-        dateLineMatch = re.search(datePatternLine,card)
-        if(dateLineMatch):
-            dateLine = dateLineMatch.group(0).replace("\n","")
-            card = card.replace(dateLine,"")
-            
-        for signaturePattern in signaturePatterns:
-            signatureMatches = re.findall(signaturePattern,card)
-
-            if(len(signatureMatches) > 0):
-                signature = signatureMatches[0]
+            crapData = re.findall(crapPattern,card)
+            for crap in crapData:
                 
-                card = card.replace(signature,"")
-                break
-            
-            
-            
-        for autorPattern in autorPatterns:
-            autors = re.findall(autorPattern,card)
-            if(len(autors) > 0):
-                break
+                card = card.replace(crap,"")
 
+            dateLineMatch = re.search(datePatternLine,card)
+            if(dateLineMatch):
+                dateLine = dateLineMatch.group(0).replace("\n","")
+                card = card.replace(dateLine,"")
+                
+            for signaturePattern in signaturePatterns:
+                signatureMatches = re.findall(signaturePattern,card)
 
-        for autor in autors:
-            card = card.replace(autor,"")
-            #print(autor)
+                if(len(signatureMatches) > 0):
+                    signature = signatureMatches[0]
+                    card = card.replace(signature,"")
+                    break
+                
+                
+                
+            for autorPattern in autorPatterns:
+                autors = re.findall(autorPattern,card)
+                if(len(autors) > 0):
+                    break
 
-        #Zeilenumbrueche aus Titeldaten entfernen
-        content = card.replace("\n","")
-
-        onlineSignatures = ''
-        onlineTitle = ''
-
-
-        #zahlen und sonderzeichen fuer die suche entfernen
-        titlePhrases = re.findall(r'[\w]{3,30}',content)
-        #titlePhrases = content.split(" ")
-        if(len(autors)>0):
 
             for autor in autors:
-                #zuerst ohne titel probieren
-                signatures, title, hitCount = getDataOnline(autor,'')
+                card = card.replace(autor,"")
+                #print(autor)
 
-                
-                if(hitCount == 1):
-                    #nur ein treffer -fertig
-                    onlineSignatures = ",".join(signatures)
-                    onlineTitle = "".join(title)
-                    print(onlineTitle)
-                    break
+            #Zeilenumbrueche aus Titeldaten entfernen
+            content = card.replace("\n","")
+
+            onlineSignatures = ''
+            onlineTitle = ''
+
+
+            #zahlen und sonderzeichen fuer die suche entfernen
+            titlePhrases = re.findall(r'[\w]{3,30}',content)
+            #titlePhrases = content.split(" ")
+            if(len(autors)>0):
+
+                for autor in autors:
+                    #zuerst ohne titel probieren
+                    signatures, title, hitCount = getDataOnline(autor,'')
+
                     
-                elif(hitCount > 1):
-                    #mehr als ein treffer mit autor alleine - suche mit titelwoertern
-                    for phrase in titlePhrases:
-                        signatures, title, hitCount = getDataOnline(autor,phrase)
-                        if(hitCount == 1):
-                            #nur ein treffer -fertig
-                            onlineSignatures = (",".join(signatures))
-                            onlineTitle = ("".join(title))
-                            print(onlineTitle + " " + onlineSignatures)
-                            break
+                    if(hitCount == 1):
+                        #nur ein treffer -fertig
+                        onlineSignatures = ",".join(signatures)
+                        onlineTitle = "".join(title)
+                        print("online gefunden: " + onlineTitle + " " + onlineSignatures)
+                        break
+                        
+                    elif(hitCount > 1):
+                        #mehr als ein treffer mit autor alleine - suche mit titelwoertern
+                        for phrase in titlePhrases:
+                            signatures, title, hitCount = getDataOnline(autor,phrase)
+                            if(hitCount == 1):
+                                #nur ein treffer -fertig
+                                onlineSignatures = (",".join(signatures))
+                                onlineTitle = ("".join(title))
+                                print("online gefunden: " + onlineTitle + " " + onlineSignatures)
+                                break
+                        
+                    if(len(onlineSignatures)>0):
+                       break
                     
-                if(len(onlineSignatures)>0):
-                   break
-                
 
 
 
-        csvFile.write(signature + ";" + ",".join(autors) + ";" + dateLine + ";" + content + ";" + onlineTitle + ";" + onlineSignatures + os.linesep)
-        pageNum+=1
+            csvFile.write(signature + ";" + ",".join(autors) + ";" + dateLine + ";" + content + ";" + onlineTitle + ";" + onlineSignatures + ";" + pdfFile + ";" + str(pageNum) +  os.linesep)
+            pageNum+=1
+        pdfFileNum+=1
     csvFile.close()
     
           
