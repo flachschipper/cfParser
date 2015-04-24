@@ -1,14 +1,13 @@
 #!/usr/bin/python3
 # -*- coding: latin-1 -*-
-import re
 import sys
 import os
 import requests
 import codecs
 from lxml import html
 from PyPDF2 import PdfFileReader
-
-
+import re
+from fuzzywuzzy import fuzz #phonetische string suche
 
 signaturePatterns = [
     r"([V]5 *[0-9]{3}(?:[a-g](?:.{0,1}[a-g])?)?)",
@@ -29,9 +28,14 @@ crapPattern = r"([a-d]=[\d]{2}/.{1,4})"
 def getDataOnline(autor,title):
     s=requests.session()
     
-    page = s.get('http://katalogix.uni-muenster.de/Katalog/start.do')
-    tree = html.fromstring(page.text)
-    CSId = tree.xpath('//input[@name="CSId"]/@value')
+    try:
+        page = s.get('http://katalogix.uni-muenster.de/Katalog/start.do')
+        tree = html.fromstring(page.text)
+        CSId = tree.xpath('//input[@name="CSId"]/@value')
+    except:
+        print(autor)
+        print(title)
+        return [],"",0
 
 
     payload = {'methodToCall':'submit',
@@ -98,11 +102,14 @@ if __name__ == '__main__':
         print(pdfFile)
     
 
-    csvFile = codecs.open("results.csv","w+",encoding='utf-8')
+    
 
     pdfFileNum = 1
     for pdfFile in pdfFiles:
         
+        csvFileName = pdfFile.split('.')[0] + ".csv"
+        
+        csvFile = codecs.open(csvFileName,"w+",encoding='utf-8')
         cardFileText = []
         pdfInput = PdfFileReader(pdfFiles[0],"rb")
         
@@ -193,14 +200,15 @@ if __name__ == '__main__':
                                 break
                         
                     if(len(onlineSignatures)>0):
-                       break
+                        break
                     
 
-
-
-            csvFile.write(signature + ";" + ",".join(autors) + ";" + dateLine + ";" + content + ";" + onlineTitle + ";" + onlineSignatures + ";" + pdfFile + ";" + str(pageNum) +  os.linesep)
+            #gefundenen titel mit titel von karteikarte vergleichen und score ermitteln
+            titleMatchScore = fuzz.token_set_ratio(content, onlineSignatures)
+            print(str(titleMatchScore))
+            csvFile.write(signature + ";" + ",".join(autors) + ";" + dateLine + ";" + content + ";" + onlineTitle + ";" + onlineSignatures + ";" +str(titleMatchScore)+ ";"+ pdfFile + ";" + str(pageNum) +  os.linesep)
             pageNum+=1
         pdfFileNum+=1
-    csvFile.close()
+        csvFile.close()
     
           

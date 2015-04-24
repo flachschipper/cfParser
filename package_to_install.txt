@@ -1,0 +1,6 @@
+sudo apt-get install python3-pip
+sudo pip3 install codecs
+sudo pip3 install requests
+sudo pip3 install pypdf2
+sudo pip3 install fuzzywuzzy
+sudo pip3 install lxml
