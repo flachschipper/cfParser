@@ -10,16 +10,16 @@ import re
 from fuzzywuzzy import fuzz #phonetische string suche
 
 signaturePatterns = [
-    r"([V]5 *[0-9]{3}(?:[a-g](?:.{0,1}[a-g])?)?)",
-    r"([VY] {0,4}5 *[0-9]{3}(?:[a-g].{0,3}[a-g]?)?)",
+    r"([V][\d] *[0-9]{3}(?:[a-g](?:.{0,1}[a-g])?)?)",
+    r"([VYX] {0,4}[\d]? *[0-9]{1,3}(?:[a-g][-~] {0,3}[a-g]?)?)",
     ]
 
 autorPatterns = [
-    r"([a-zA-z]{2,20}, {0,5}[a-zA-z]{2,20})",
+    r"([\w]{2,20}, {0,5}[\w]{2,20})",
     r"([\w]{2,20}, {0,5}[\w]{2,20})"
     ]
 
-datePatternLine = r"\n.*((19[\d]{2})|(20[\d]{2})).*\n"    
+datePatternLine = r"([a-zA-zäöü,]{3,20} {0,3}: {0,3}[a-zA-zäöü]{3,10}.{0,5}(19[\d]{2})|(20[\d]{2}))"    
 
 
 crapPattern = r"([a-d]=[\d]{2}/.{1,4})"
@@ -33,8 +33,8 @@ def getDataOnline(autor,title):
         tree = html.fromstring(page.text)
         CSId = tree.xpath('//input[@name="CSId"]/@value')
     except:
-        print(autor)
-        print(title)
+        #print(autor)
+        #print(title)
         return [],"",0
 
 
@@ -97,7 +97,7 @@ if __name__ == '__main__':
             pdfFiles.append(file) 
 
     pdfCount = len(pdfFiles)
-    print("{0} PDf Datei(en) gefunden:".format(pdfCount))
+    print("{0} Pdf Datei(en) gefunden:".format(pdfCount))
     for pdfFile in pdfFiles:
         print(pdfFile)
     
@@ -111,7 +111,7 @@ if __name__ == '__main__':
         
         csvFile = codecs.open(csvFileName,"w+",encoding='utf-8')
         cardFileText = []
-        pdfInput = PdfFileReader(pdfFiles[0],"rb")
+        pdfInput = PdfFileReader(pdfFile,"rb")
         
         numPages = pdfInput.getNumPages()
         #pdf seiten in text umwandlen
