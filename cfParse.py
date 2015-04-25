@@ -8,6 +8,8 @@ from lxml import html
 from PyPDF2 import PdfFileReader
 import re
 from fuzzywuzzy import fuzz #phonetische string suche
+from lxml.html import HTMLParser
+
 
 signaturePatterns = [
     r"([V][\d] *[0-9]{3}(?:[a-g](?:.{0,1}[a-g])?)?)",
@@ -27,16 +29,13 @@ crapPattern = r"([a-d]=[\d]{2}/.{1,4})"
 
 def getDataOnline(autor,title):
     s=requests.session()
+    html_parser = HTMLParser()
+    page = s.get('http://katalogix.uni-muenster.de/Katalog/start.do')
+    tree = html.fromstring(page.text,parser=html_parser)
+    CSId = tree.xpath('//input[@name="CSId"]/@value')
+    #print(autor)
+    #print(title)
     
-    try:
-        page = s.get('http://katalogix.uni-muenster.de/Katalog/start.do')
-        tree = html.fromstring(page.text)
-        CSId = tree.xpath('//input[@name="CSId"]/@value')
-    except:
-        #print(autor)
-        #print(title)
-        return [],"",0
-
 
     payload = {'methodToCall':'submit',
                'CSId':CSId,
@@ -64,7 +63,7 @@ def getDataOnline(autor,title):
 
 
     page = s.get('http://katalogix.uni-muenster.de/Katalog/search.do',params=payload)
-    tree = html.fromstring(page.text)
+    tree = html.fromstring(page.text,parser=html_parser)
 
     #anzahl der Treffer ermitteln
     hitCount = int(tree.xpath('count(//div[@id="hitlist"]/div/table/tr)'))
