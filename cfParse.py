@@ -26,12 +26,19 @@ datePatternLine = r"([a-zA-zהצü,]{3,20} {0,3}: {0,3}[a-zA-zהצü]{3,10}.{0,5}(19[\
 
 crapPattern = r"([a-d]=[\d]{2}/.{1,4})"
 
+s=requests.session()
 
 def getDataOnline(autor,title):
-    s=requests.session()
     html_parser = HTMLParser()
+    
+    #try:
     page = s.get('http://katalogix.uni-muenster.de/Katalog/start.do')
     tree = html.fromstring(page.text,parser=html_parser)
+    #except:
+        #return [],"",0
+        
+        
+
     CSId = tree.xpath('//input[@name="CSId"]/@value')
     #print(autor)
     #print(title)
