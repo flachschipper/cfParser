@@ -31,13 +31,13 @@ s=requests.session()
 def getDataOnline(autor,title):
     html_parser = HTMLParser(recover=True)
     
-    #try:
-    page = s.get('http://katalogix.uni-muenster.de/Katalog/start.do')
-    tree = html.fromstring(page.text,parser=html_parser)
-    #except:
-        #return [],"",0
+    try:
+        page = s.get('http://katalogix.uni-muenster.de/Katalog/start.do')
+    
+    except:
+        return [],"",0
         
-        
+    tree = html.fromstring(page.text,parser=html_parser) 
 
     CSId = tree.xpath('//input[@name="CSId"]/@value')
     #print(autor)
