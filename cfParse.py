@@ -29,7 +29,7 @@ crapPattern = r"([a-d]=[\d]{2}/.{1,4})"
 s=requests.session()
 
 def getDataOnline(autor,title):
-    html_parser = HTMLParser()
+    html_parser = HTMLParser(recover=True)
     
     #try:
     page = s.get('http://katalogix.uni-muenster.de/Katalog/start.do')
@@ -175,7 +175,7 @@ if __name__ == '__main__':
 
             onlineSignatures = ''
             onlineTitle = ''
-
+            signatures = []
 
             #zahlen und sonderzeichen fuer die suche entfernen
             titlePhrases = re.findall(r'[\w]{3,30}',content)
@@ -189,7 +189,7 @@ if __name__ == '__main__':
                     
                     if(hitCount == 1):
                         #nur ein treffer -fertig
-                        onlineSignatures = ",".join(signatures)
+                        
                         onlineTitle = "".join(title)
                         print("online gefunden: " + onlineTitle + " " + onlineSignatures)
                         break
@@ -200,7 +200,7 @@ if __name__ == '__main__':
                             signatures, title, hitCount = getDataOnline(autor,phrase)
                             if(hitCount == 1):
                                 #nur ein treffer -fertig
-                                onlineSignatures = (",".join(signatures))
+                                
                                 onlineTitle = ("".join(title))
                                 print("online gefunden: " + onlineTitle + " " + onlineSignatures)
                                 break
@@ -211,8 +211,25 @@ if __name__ == '__main__':
 
             #gefundenen titel mit titel von karteikarte vergleichen und score ermitteln
             titleMatchScore = fuzz.token_set_ratio(content, onlineSignatures)
-            print(str(titleMatchScore))
-            csvFile.write(signature + ";" + ",".join(autors) + ";" + dateLine + ";" + content + ";" + onlineTitle + ";" + onlineSignatures + ";" +str(titleMatchScore)+ ";"+ pdfFile + ";" + str(pageNum) +  os.linesep)
+            
+            
+            onlineSignatures = (";".join(signatures))
+            
+            onlineSignatures += ";" * (20-len(signatures))
+            
+            columns = [
+                       signature,
+                       ",".join(autors),
+                       dateLine,
+                       content,
+                       onlineTitle,
+                       str(titleMatchScore),
+                       "file://" + os.path.abspath("./"+pdfFile)+"#page="+str(pageNum),
+                       str(pageNum),
+                       onlineSignatures,
+                       ]
+            csvFile.write(";".join(columns) +  os.linesep)
+            csvFile.flush()
             pageNum+=1
         pdfFileNum+=1
         csvFile.close()
