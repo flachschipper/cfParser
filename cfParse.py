@@ -32,7 +32,7 @@ requestErrors=0
 xmlErrors=0
 
 def getDataOnline(autor,title):
-    html_parser = HTMLParser()
+    html_parser = HTMLParser(recover=True)
    
     
     try:
