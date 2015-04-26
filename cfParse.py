@@ -9,6 +9,7 @@ from PyPDF2 import PdfFileReader
 import re
 from fuzzywuzzy import fuzz #phonetische string suche
 from lxml.html import HTMLParser
+from lxml.etree import XMLParser
 
 
 signaturePatterns = [
@@ -27,17 +28,27 @@ datePatternLine = r"([a-zA-zäöü,]{3,20} {0,3}: {0,3}[a-zA-zäöü]{3,10}.{0,5}(19[\
 crapPattern = r"([a-d]=[\d]{2}/.{1,4})"
 
 s=requests.session()
+requestErrors=0
 
+html_parser = HTMLParser()
 def getDataOnline(autor,title):
-    html_parser = HTMLParser(recover=True)
+    
+    global html_parser
     
     try:
         page = s.get('http://katalogix.uni-muenster.de/Katalog/start.do')
-    
-    except:
-        return [],"",0
         
+    except:
+        global requestErrors
+        requestErrors+=1
+        print("request errors")
+        print(requestErrors)
+        return [],"",0
     tree = html.fromstring(page.text,parser=html_parser) 
+        
+    
+        
+    
 
     CSId = tree.xpath('//input[@name="CSId"]/@value')
     #print(autor)
@@ -89,6 +100,7 @@ def getDataOnline(autor,title):
     if(hitCount == 0 and len(signatures) > 0):
         hitCount = 1
 
+    
     #zweites und drittes ergebnis ist leer
     return signatures[::3], title, hitCount
 
@@ -224,7 +236,7 @@ if __name__ == '__main__':
                        content,
                        onlineTitle,
                        str(titleMatchScore),
-                       "file://" + os.path.abspath("./"+pdfFile)+"#page="+str(pageNum),
+                       pdfFile,
                        str(pageNum),
                        onlineSignatures,
                        ]
