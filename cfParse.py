@@ -29,7 +29,7 @@ crapPattern = r"([a-d]=[\d]{2}/.{1,4})"
 
 s=requests.session()
 requestErrors=0
-
+xmlErrors=0
 html_parser = HTMLParser()
 def getDataOnline(autor,title):
     
@@ -44,9 +44,17 @@ def getDataOnline(autor,title):
         print("request errors")
         print(requestErrors)
         return [],"",0
-    tree = html.fromstring(page.text,parser=html_parser) 
-        
     
+    try:
+        tree = html.fromstring(page.text,parser=html_parser) 
+        
+    except Exception as e:
+        print(e)
+        global xmlErrors
+        xmlErrors+=1
+        print("xml parse errors:")
+        print(xmlErrors)
+        return [],"",0
         
     
 
