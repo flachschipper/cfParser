@@ -30,10 +30,10 @@ crapPattern = r"([a-d]=[\d]{2}/.{1,4})"
 s=requests.session()
 requestErrors=0
 xmlErrors=0
-html_parser = HTMLParser()
+
 def getDataOnline(autor,title):
-    
-    global html_parser
+    html_parser = HTMLParser()
+   
     
     try:
         page = s.get('http://katalogix.uni-muenster.de/Katalog/start.do')
