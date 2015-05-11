@@ -201,7 +201,7 @@ if __name__ == '__main__':
             content = card.replace("\n","")
 
             onlineSignatures = ''
-            onlineTitle = ''
+            onlineTitle = ' '
             signatures = []
 
             #zahlen und sonderzeichen fuer die suche entfernen
