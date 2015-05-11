@@ -146,8 +146,8 @@ if __name__ == '__main__':
         for pageNum in range(0,numPages):
             #semikolons entfernen - wegen csv
             pageText = pdfInput.getPage(pageNum).extractText().replace(";","")
-            pageText = pdfInput.getPage(pageNum).extractText().replace("\"","")
-            pageText = pdfInput.getPage(pageNum).extractText().replace("'","")
+            pageText = pageText.replace("\"","")
+            pageText = pageText.replace("'","")
             cardFileText.append(pageText)
         
         
@@ -188,7 +188,7 @@ if __name__ == '__main__':
                 
                 
             for autorPattern in autorPatterns:
-                autors = re.findall(autorPattern,card)
+                autors = re.findall(autorPattern,card)[0:1]
                 if(len(autors) > 0):
                     break
 
