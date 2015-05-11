@@ -242,7 +242,6 @@ if __name__ == '__main__':
             
             onlineSignatures = (";".join(signatures))
             
-            onlineSignatures += ";" * (20-len(signatures))
             
             columns = [
                        signature,
