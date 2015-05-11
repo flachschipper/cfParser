@@ -9,12 +9,11 @@ from PyPDF2 import PdfFileReader
 import re
 from fuzzywuzzy import fuzz #phonetische string suche
 from lxml.html import HTMLParser
-from lxml.etree import XMLParser
 
 
 signaturePatterns = [
-    r"([V][\d] *[0-9]{3}(?:[a-g](?:.{0,1}[a-g])?)?)",
-    r"([VYX] {0,4}[\d]? *[0-9]{1,3}(?:[a-g][-~] {0,3}[a-g]?)?)",
+    r"([VYXW][\d] *[0-9]{3}(?:[a-g](?:.{0,1}[a-g])?)?)",
+    r"([VYXW] {0,4}[\d]? *(?:(?:[0-9]{1,4})|(?:[0-9]{1,2} */ *[0-9]{1,2}))(?: *[a-g](?:.{0,1}[a-g])?)?)",
     ]
 
 autorPatterns = [
@@ -30,6 +29,9 @@ crapPattern = r"([a-d]=[\d]{2}/.{1,4})"
 s=requests.session()
 requestErrors=0
 xmlErrors=0
+
+cardCount=0
+signaturesFound=0
 
 def getDataOnline(autor,title):
     html_parser = HTMLParser(recover=True)
@@ -144,6 +146,8 @@ if __name__ == '__main__':
         for pageNum in range(0,numPages):
             #semikolons entfernen - wegen csv
             pageText = pdfInput.getPage(pageNum).extractText().replace(";","")
+            pageText = pdfInput.getPage(pageNum).extractText().replace("\"","")
+            pageText = pdfInput.getPage(pageNum).extractText().replace("'","")
             cardFileText.append(pageText)
         
         
@@ -155,6 +159,7 @@ if __name__ == '__main__':
 
 
         for card in cardFileText:
+            cardCount+=1
             signature = ''
             dateLine = ''
             autors = []
@@ -171,10 +176,12 @@ if __name__ == '__main__':
                 card = card.replace(dateLine,"")
                 
             for signaturePattern in signaturePatterns:
-                signatureMatches = re.findall(signaturePattern,card)
+                signatureMatches = re.findall(signaturePattern,card.replace(" ",""))
 
                 if(len(signatureMatches) > 0):
+                    #nimm erste  gefunde  Signatur, da die normalerweise ganz oben steht
                     signature = signatureMatches[0]
+                    signaturesFound+=1
                     card = card.replace(signature,"")
                     break
                 
@@ -253,5 +260,6 @@ if __name__ == '__main__':
             pageNum+=1
         pdfFileNum+=1
         csvFile.close()
-    
+        
+    print("{0} % der Signaturen der Karteikarten erkannt".format((signaturesFound/cardCount)*100))
           
