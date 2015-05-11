@@ -237,7 +237,7 @@ if __name__ == '__main__':
                     
 
             #gefundenen titel mit titel von karteikarte vergleichen und score ermitteln
-            titleMatchScore = fuzz.token_set_ratio(content, onlineSignatures)
+            titleMatchScore = fuzz.token_set_ratio(content, onlineTitle)
             
             
             onlineSignatures = (";".join(signatures))
